@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Prediction Graph</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+    <h2>Stock Prediction</h2>
+
+    <!-- Input for stock prediction -->
+    <label for="featureInput">Enter 64 Features (comma-separated):</label>
+    <input type="text" id="featureInput" placeholder="1, 2, 3, ..., 64">
+    <button onclick="getPrediction()">Get Prediction</button>
+
+    <br><br>
+
+    <!-- Dropdown to switch between bar and line graph -->
+    <label for="chartType">Select Chart Type:</label>
+    <select id="chartType" onchange="updateChartType()">
+        <option value="bar">Bar Chart</option>
+        <option value="line">Line Chart</option>
+    </select>
+
+    <br><br>
+
+    <!-- Canvas for displaying the graph -->
+    <canvas id="stockChart"></canvas>
+
+    <script>
+        let chart; // Store the Chart.js instance
+
+        function getPrediction() {
+            let inputValues = document.getElementById("featureInput").value;
+            let featureArray = inputValues.split(",").map(num => parseFloat(num.trim()));
+
+            if (featureArray.length !== 64) {
+                alert("Please enter exactly 64 numbers!");
+                return;
+            }
+
+            fetch("http://127.0.0.1:5000/stock", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ "features": featureArray })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.prediction) {
+                    updateChart(data.prediction[0]); // Use the first prediction
+                } else {
+                    alert("Prediction failed: " + JSON.stringify(data));
+                }
+            })
+            .catch(error => console.error("Error:", error));
+        }
+
+        function updateChart(predictionData) {
+            let ctx = document.getElementById("stockChart").getContext("2d");
+
+            if (chart) {
+                chart.destroy(); // Destroy the previous chart before creating a new one
+            }
+
+            let selectedType = document.getElementById("chartType").value;
+
+            chart = new Chart(ctx, {
+                type: selectedType,
+                data: {
+                    labels: Array.from({ length: predictionData.length }, (_, i) => `Day ${i + 1}`),
+                    datasets: [{
+                        label: "Stock Prediction",
+                        data: predictionData,
+                        backgroundColor: "rgba(75, 192, 192, 0.2)",
+                        borderColor: "rgba(75, 192, 192, 1)",
+                        borderWidth: 2
+                    }]
+                }
+            });
+        }
+
+        function updateChartType() {
+            if (chart) {
+                chart.config.type = document.getElementById("chartType").value;
+                chart.update();
+            }
+        }
+    </script>
+
+</body>
+</html>
