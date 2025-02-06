@@ -1,13 +1,12 @@
 from flask import Flask, request, jsonify
 import joblib
 import numpy as np
-from flask_cors import CORS  # Import CORS
+ # Import CORS
 
 app = Flask(__name__)
 
 # Enable CORS for the specific frontend URL
-CORS(app, resources={r"/stock": {"origins": "https://stock-frontend-x3t4.onrender.com"}})
-
+CORS(app)  
 # Load your model
 model = joblib.load('stock_model.pkl')
 
